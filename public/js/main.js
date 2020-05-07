@@ -1,38 +1,37 @@
 const staticUserID = '5eb45d392661049473f808af';
 $(document).ready(function () {
   getProducts();
-  getUser(); 
+  getUser(true);
 });
 
-function getUser(){
+function getUser(flag) {
   var request = new XMLHttpRequest();
   request.open('GET', `https://wake-pritvi-task.herokuapp.com/user/${staticUserID}`);
   request.onload = function () {
     var userData = request.responseText;
     var userJson = JSON.parse(userData);
 
-    console.log(userJson);
-    var html = parseUserHTML(userJson); 
-    
-    var jumbo = document.getElementById('flex-container'); 
-    jumbo.innerHTML+= html;
+    //console.log(userJson);
+    if (flag) {
+      var html = parseUserHTML(userJson);
 
-    jumbo.innerHTML+= `<button id="" class="transaction-button-class" onclick="getTransaction('` + staticUserID + `')"><b>Transaction</b></button>`
-    
+      var jumbo = document.getElementById('flex-container');
+      jumbo.innerHTML = html + `<button id="" class="transaction-button-class" onclick="getTransaction('` + staticUserID + `')"><b>Transaction</b></button>`; 
 
+    }
+    //return userJson;
 
   };
   request.send();
-
 }
 
-function parseUserHTML(userJson){
+function parseUserHTML(userJson) {
   var HTMLstring = ` <h2 class="display-3"><span class="prod-price-span">Balance : $${userJson.wallet}</span></h2>
   <h4 class="prod-title"><span class="prod-title-span">Name : ${userJson.name}</span></h4>
   <h4 class="prod-title"><span class="prod-title-span">Email : ${userJson.email}</span></h4>
-  <h4 class="prod-title"><span class="prod-title-span">User id : ${userJson._id}</span></h4>`; 
+  <h4 class="prod-title"><span class="prod-title-span">User id : ${userJson._id}</span></h4>`;
 
-  return HTMLstring; 
+  return HTMLstring;
 }
 
 
@@ -87,15 +86,61 @@ function buyButton(prodID) {
   request.onload = function () {
     var productData = request.responseText;
     var productJson = JSON.parse(productData);
-    console.log(productJson);
 
+
+
+    var request2 = new XMLHttpRequest();
+    request2.open('GET', `https://wake-pritvi-task.herokuapp.com/user/${staticUserID}`);
+    request2.onload = function () {
+      var userData = request2.responseText;
+      var userJson = JSON.parse(userData);
+
+      console.log(userJson);
+      console.log(productJson);
+      if(userJson.wallet >= productJson.price){
+        var balance = userJson.wallet-productJson.price; 
+        postTransaction(productJson._id, userJson._id, "None", productJson.price); 
+        updateWallet(userJson.email, userJson.password, userJson.name, balance);
+      }else{
+        alert('wallet balance low'); 
+      }
+      
+
+    };
+    request2.send();
 
 
   };
   request.send();
-
 }
 
-function getTransaction(morning){
+
+function postTransaction(pid, uid, cid, amt){
+  var updateRequest = new XMLHttpRequest(); 
+        updateRequest.open('POST', `https://wake-pritvi-task.herokuapp.com/transaction`); 
+        var data = {
+          "pid" : pid,
+          "uid" : uid,
+          "cid" : cid,
+          "amount" : amt
+        }; 
+        updateRequest.setRequestHeader('Content-Type', 'application/json');
+        updateRequest.send(JSON.stringify(data)); 
+}
+
+function updateWallet(email, password, namex, amt){
+  var updateRequest = new XMLHttpRequest(); 
+        updateRequest.open('POST', `https://wake-pritvi-task.herokuapp.com/user/update/${staticUserID}`); 
+        var data = {
+          "email" : email,
+          "password" : password,
+          "name" : namex,
+          "wallet" : amt
+        }; 
+        updateRequest.setRequestHeader('Content-Type', 'application/json');
+        updateRequest.send(JSON.stringify(data)); 
+}
+
+function getTransaction(morning) {
 
 }
